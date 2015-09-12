@@ -15,15 +15,11 @@ node[:deploy].each do |application, deploy|
     path deploy[:deploy_to]
   end
 
-  include_recipe "opsworks_sidekiq::setup"
+  node.set[:opsworks][:rails_stack][:recipe] = "opsworks_sidekiq::setup"
 
-  template "#{deploy[:deploy_to]}/shared/config/memcached.yml" do
-    cookbook "rails"
-    source "memcached.yml.erb"
-    mode 0660
-    owner deploy[:user]
-    group deploy[:group]
-    variables(:memcached => (deploy[:memcached] || {}), :environment => deploy[:rails_env])
+  opsworks_rails do
+    deploy_data deploy
+    app application
   end
 
   node.set[:opsworks][:rails_stack][:restart_command] = node[:sidekiq][application][:restart_command]
